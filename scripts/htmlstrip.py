@@ -1,7 +1,8 @@
 # script to strip given text from HTML tags
 # usecase: Content from webpages recovered may have stray HTML tags, like <b> or <i>
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
+import urllib.request
 
 #Simple class to encapsulate the stripping of html tags.
 class MLStripper(HTMLParser):
