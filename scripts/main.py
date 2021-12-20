@@ -5,7 +5,6 @@
 #import other modules
 from cosineSim import *
 from htmlstrip import *
-from extractdocx import *
 
 #import required modules
 import codecs
@@ -81,8 +80,6 @@ def main():
 	if len(sys.argv) <3:
 		print "Usage: python main.py <input-filename>.txt <output-filename>.txt"
 		sys.exit()
-	if sys.argv[1].endswith(".docx"):
-	    t = docxExtract(sys.argv[1])
 	else:
 	    t=open(sys.argv[1],'r')
 	    if not t:
