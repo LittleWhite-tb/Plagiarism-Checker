@@ -78,13 +78,13 @@ def main():
 	# n-grams N VALUE SET HERE
 	n=9
 	if len(sys.argv) <3:
-		print "Usage: python main.py <input-filename>.txt <output-filename>.txt"
+		print("Usage: python main.py <input-filename>.txt <output-filename>.txt")
 		sys.exit()
 	else:
 	    t=open(sys.argv[1],'r')
 	    if not t:
-		    print "Invalid Filename"
-		    print "Usage: python main.py <input-filename>.txt <output-filename>.txt"
+		    print("Invalid Filename")
+		    print("Usage: python main.py <input-filename>.txt <output-filename>.txt")
 		    sys.exit()
 	    t=t.read()
 	queries = getQueries(t,n)
@@ -102,7 +102,7 @@ def main():
 	for s in q[:100]:
 		output,c=searchWeb(s,output,c)
 		msg = "\r"+str(i)+"/"+str(count)+"completed..."
-		sys.stdout.write(msg);
+		sys.stdout.write(msg)
 		sys.stdout.flush()
 		i=i+1
 	#print "\n"
@@ -111,7 +111,7 @@ def main():
 		f.write(str(ele[0])+" "+str(ele[1]*100.00))
 		f.write("\n")
 	f.close()
-	print "\nDone!"
+	print("\nDone!")
 
 
 if __name__ == "__main__":
@@ -120,5 +120,5 @@ if __name__ == "__main__":
 	except:
 		#writing the error to stdout for better error detection
 		error = traceback.format_exc()
-		print "\nUh Oh!\n"+"Plagiarism-Checker encountered an error!:\n"+error
+		print("\nUh Oh!\n"+"Plagiarism-Checker encountered an error!:\n" + error)
 
