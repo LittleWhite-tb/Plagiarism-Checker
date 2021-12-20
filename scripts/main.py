@@ -7,6 +7,8 @@ from cosineSim import *
 from htmlstrip import *
 
 from scholarly import scholarly
+from scholarly import ProxyGenerator
+from fp.fp import FreeProxy
 
 #import required modules
 import codecs
@@ -115,16 +117,26 @@ def main():
         t=t.read()
     queries = getQueries(t,n)
     q = [' '.join(d) for d in queries]
-    found = []
+
     #using 2 dictionaries: c and output
     #output is used to store the url as key and number of occurences of that url in different searches as value
-    #c is used to store url as key and sum of all the cosine similarities of all matches as value
+    #c is used to store url as key and tuple of URL and text leading to this match
     output = {}
     c = {}
     i=1
     count = len(q)
     if count>100:
         count=100
+
+    proxy = ProxyGenerator()
+
+    proxy_url = FreeProxy().get()
+    success = proxy.SingleProxy(http=proxy_url)
+    if not success:
+        print("Fail to set the proxy (" + str(proxy_url) + str(")"))
+        return -2
+    scholarly.use_proxy(proxy, proxy)
+
     for s in q[:100]:
         output,c=searchScholar(s,output,c)
         msg = "\r"+str(i)+"/"+str(count)+"completed..."
