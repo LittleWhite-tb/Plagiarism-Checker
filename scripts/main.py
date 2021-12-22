@@ -17,6 +17,7 @@ import sys
 import operator
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 import json as simplejson
+import time
 
 # Given a text string, remove all non-alphanumeric
 # characters (using Unicode definition of alphanumeric).
@@ -102,6 +103,8 @@ def searchScholar(text, output, c):
 
 # Use the main function to scrutinize a file for
 # plagiarism
+segment_limit = 0
+start = 482
 def main():
     # n-grams N VALUE SET HERE
     n=9
@@ -115,6 +118,26 @@ def main():
             print("Usage: python main.py <input-filename>.txt <output-filename>.txt")
             sys.exit()
         t=t.read()
+
+
+    print("Looking for a proxy")
+    proxy = ProxyGenerator()
+    while True:
+        proxy_url = FreeProxy(rand=True, timeout=1).get()
+        print("... trying with " + str(proxy_url))
+        success = proxy.SingleProxy(http=proxy_url)
+        if success:
+            try:
+                print("Setting proxy " + str(proxy_url))
+                scholarly.use_proxy(proxy, proxy)
+            except:
+                continue
+            print("Done")
+            break
+            #print("Fail to set the proxy (" + str(proxy_url) + str(")"))
+            #return -2
+
+
     queries = getQueries(t,n)
     q = [' '.join(d) for d in queries]
 
@@ -125,31 +148,32 @@ def main():
     c = {}
     i=1
     count = len(q)
-    if count>100:
-        count=100
+    print("Found " + str(count) + " segments")
+    if segment_limit != 0 and count>segment_limit:
+        count=segment_limit
+        print("Limiting to " + str(segment_limit) + " segments")
 
-    proxy = ProxyGenerator()
-
-    proxy_url = FreeProxy().get()
-    success = proxy.SingleProxy(http=proxy_url)
-    if not success:
-        print("Fail to set the proxy (" + str(proxy_url) + str(")"))
-        return -2
-    scholarly.use_proxy(proxy, proxy)
-
-    for s in q[:100]:
-        output,c=searchScholar(s,output,c)
-        msg = "\r"+str(i)+"/"+str(count)+"completed..."
-        sys.stdout.write(msg)
-        sys.stdout.flush()
-        i=i+1
+    try:
+        for s in q[start:count]:
+            output,c=searchScholar(s,output,c)
+            msg = "\r"+str(i+start)+"/"+str(count)+"completed..."
+            sys.stdout.write(msg)
+            sys.stdout.flush()
+            i=i+1
+    except:
+        print("Uh Oh! Plagiarism search had to stop")
+        print(traceback.format_exc())
+    finally:
+        # In all cases, let's try to save the results
+        f = open(sys.argv[2],"w")
+        for ele in sorted(iter(c.items()),key=operator.itemgetter(1),reverse=True):
+            # f.write(str(ele[1][1]) + str(" - ") + str(ele[0]) + str("(") + str(ele[1][0]) + str(")"))
+            f.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
+            f.write("\n")
+        f.close()
 
     #print "\n"
-    f = open(sys.argv[2],"w")
-    for ele in sorted(iter(c.items()),key=operator.itemgetter(1),reverse=True):
-        f.write(str(ele[1][1]) + str(" - ") + str(ele[0]) + str("(") + str(ele[1][0]) + str(")"))
-        f.write("\n")
-    f.close()
+
     print("\nDone!")
 
 
