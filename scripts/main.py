@@ -117,6 +117,7 @@ def main():
     except:
         return -1
 
+
     if args.use_proxy:
         print("Looking for a proxy")
         proxy = ProxyGenerator()
@@ -140,19 +141,21 @@ def main():
     #using 2 dictionaries: c and output
     #output is used to store the url as key and number of occurences of that url in different searches as value
     #c is used to store url as key and tuple of URL and text leading to this match
+
+    nb_segments = len(q)
+    loop_end = args.seg_start + args.limit
+    print("Found " + str(nb_segments) + " segments")
+    if args.limit == 0 or loop_end > nb_segments:
+        loop_end = nb_segments
+
     output = {}
     c = {}
-    i=1
-    count = len(q)
-    print("Found " + str(count) + " segments")
-    if args.limit != 0 and count>segment_limit:
-        count=segment_limit
-        print("Limiting to " + str(segment_limit) + " segments")
-
     try:
-        for s in q[args.seg_start:count]:
+        i=1
+        print("Start processing from " + str(args.seg_start) + " to " + str(loop_end))
+        for s in q[args.seg_start:loop_end]:
             output,c=searchScholar(s,output,c)
-            msg = "\r"+str(i+args.seg_start)+"/"+str(count)+"completed..."
+            msg = "\r"+str(i+args.seg_start)+"/"+str(nb_segments)+"completed..."
             sys.stdout.write(msg)
             sys.stdout.flush()
             i=i+1
@@ -161,12 +164,10 @@ def main():
         print(traceback.format_exc())
     finally:
         # In all cases, let's try to save the results
-        f = open(sys.argv[2],"w")
         for ele in sorted(iter(c.items()),key=operator.itemgetter(1),reverse=True):
             # f.write(str(ele[1][1]) + str(" - ") + str(ele[0]) + str("(") + str(ele[1][0]) + str(")"))
-            f.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
-            f.write("\n")
-        f.close()
+            args.report.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
+            args.report.write("\n")
 
     #print "\n"
 
