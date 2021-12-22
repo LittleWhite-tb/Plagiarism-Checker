@@ -11,13 +11,13 @@ from scholarly import ProxyGenerator
 from fp.fp import FreeProxy
 
 #import required modules
+import argparse
 import codecs
+import json as simplejson
 import traceback
 import sys
 import operator
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
-import json as simplejson
-import time
 
 # Given a text string, remove all non-alphanumeric
 # characters (using Unicode definition of alphanumeric).
@@ -103,41 +103,37 @@ def searchScholar(text, output, c):
 
 # Use the main function to scrutinize a file for
 # plagiarism
-segment_limit = 0
-start = 482
+n=9
 def main():
-    # n-grams N VALUE SET HERE
-    n=9
-    if len(sys.argv) <3:
-        print("Usage: python main.py <input-filename>.txt <output-filename>.txt")
-        sys.exit()
-    else:
-        t=open(sys.argv[1],'r')
-        if not t:
-            print("Invalid Filename")
-            print("Usage: python main.py <input-filename>.txt <output-filename>.txt")
-            sys.exit()
-        t=t.read()
+    arg_parser = argparse.ArgumentParser(description="Scan a text document for plagiarism.")
+    arg_parser.add_argument('--use_proxy', action='store_true', dest = 'use_proxy', default=False, help='Use an automatically found proxy')
+    arg_parser.add_argument('-s', '--start', type=int, dest='seg_start', default=0, help='Start the scan from a specific segment (allows to resume a scan)')
+    arg_parser.add_argument('-l', '--limit', type=int, dest='limit', default=0, help='Limits the number of segments scanned (default: no limit)')
+    arg_parser.add_argument(type=argparse.FileType('r'), dest='text', help='Text file to scan')
+    arg_parser.add_argument(type=argparse.FileType('w'), dest='report', help='Text file where the report is written')
 
+    try:
+        args = arg_parser.parse_args()
+    except:
+        return -1
 
-    print("Looking for a proxy")
-    proxy = ProxyGenerator()
-    while True:
-        proxy_url = FreeProxy(rand=True, timeout=1).get()
-        print("... trying with " + str(proxy_url))
-        success = proxy.SingleProxy(http=proxy_url)
-        if success:
-            try:
-                print("Setting proxy " + str(proxy_url))
-                scholarly.use_proxy(proxy, proxy)
-            except:
-                continue
-            print("Done")
-            break
-            #print("Fail to set the proxy (" + str(proxy_url) + str(")"))
-            #return -2
+    if args.use_proxy:
+        print("Looking for a proxy")
+        proxy = ProxyGenerator()
+        while True:
+            proxy_url = FreeProxy(rand=True, timeout=1).get()
+            print("... trying with " + str(proxy_url))
+            success = proxy.SingleProxy(http=proxy_url)
+            if success:
+                try:
+                    print("Setting proxy " + str(proxy_url))
+                    scholarly.use_proxy(proxy, proxy)
+                except:
+                    continue
+                print("Done")
+                break
 
-
+    t=args.text.read()
     queries = getQueries(t,n)
     q = [' '.join(d) for d in queries]
 
@@ -149,14 +145,14 @@ def main():
     i=1
     count = len(q)
     print("Found " + str(count) + " segments")
-    if segment_limit != 0 and count>segment_limit:
+    if args.limit != 0 and count>segment_limit:
         count=segment_limit
         print("Limiting to " + str(segment_limit) + " segments")
 
     try:
-        for s in q[start:count]:
+        for s in q[args.seg_start:count]:
             output,c=searchScholar(s,output,c)
-            msg = "\r"+str(i+start)+"/"+str(count)+"completed..."
+            msg = "\r"+str(i+args.seg_start)+"/"+str(count)+"completed..."
             sys.stdout.write(msg)
             sys.stdout.flush()
             i=i+1
