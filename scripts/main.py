@@ -9,6 +9,7 @@ from htmlstrip import *
 from scholarly import scholarly
 from scholarly import ProxyGenerator
 from fp.fp import FreeProxy
+from bs4 import BeautifulSoup
 
 #import required modules
 import argparse
@@ -100,6 +101,58 @@ def searchScholar(text, output, c):
         return output,c
     return output,c
 
+def searchBing(text, output, c):
+    try:
+        text = text.encode('utf-8')
+    except:
+        text =  text
+
+    query = urllib.parse.quote_plus(text)
+    # if len(query)>60:
+    #    return output,c
+
+    base_url = 'https://www.bing.com/search?q='
+    url = base_url + query
+    print("Bing URL: " + url)
+    request = urllib.request.Request(url,None,{'Referer':'Google Chrome'})
+    response = urllib.request.urlopen(request)
+    print("Res " + str(response))
+    # print("Res " + str(response.read()))
+    print("Content :" + str(response.__dict__))
+
+    soup = BeautifulSoup(response.read())
+    search_res = soup.find_all(class_="b_algo")
+
+    search_res_limit = 4
+    for res in search_res:
+        if search_res_limit == 0:
+            break
+        search_res_limit -= 1
+
+        art_title = ""
+        art_link = ""
+        art_brief = ""
+        links = res.find_all('a')
+        for link in links:
+            art_link = link.get('href')
+            art_title = link.text
+
+        contents = res.find_all('p')
+        for content  in contents:
+            art_brief = content.text
+
+        score = cosineSim(text, art_brief)
+        if art_title in output:
+            output[art_link] = output[art_link] + 1
+
+            revised_score = (c[art_title]*(output[art_link] - 1) + score)/(output[art_link])
+            c[art_link] = (art_title, art_brief, revised_score)
+        else:
+            output[art_title] = 1
+            c[art_link] = (art_title, art_brief, score)
+
+    return output,c
+
 
 # Use the main function to scrutinize a file for
 # plagiarism
@@ -109,6 +162,7 @@ def main():
     arg_parser.add_argument('--use_proxy', action='store_true', dest = 'use_proxy', default=False, help='Use an automatically found proxy')
     arg_parser.add_argument('-s', '--start', type=int, dest='seg_start', default=0, help='Start the scan from a specific segment (allows to resume a scan)')
     arg_parser.add_argument('-l', '--limit', type=int, dest='limit', default=0, help='Limits the number of segments scanned (default: no limit)')
+    arg_parser.add_argument('-b', '--bing', action='store_true', dest = 'use_bing', default=False, help='Use Bing as search engine (default uses Google Scholar)')
     arg_parser.add_argument(type=argparse.FileType('r'), dest='text', help='Text file to scan')
     arg_parser.add_argument(type=argparse.FileType('w'), dest='report', help='Text file where the report is written')
 
@@ -123,6 +177,9 @@ def main():
         proxy = ProxyGenerator()
         while True:
             proxy_url = FreeProxy(rand=True, timeout=1).get()
+            if proxy_url == None:
+                print("Fail to get a proxy")
+                return -3
             print("... trying with " + str(proxy_url))
             success = proxy.SingleProxy(http=proxy_url)
             if success:
@@ -154,7 +211,12 @@ def main():
         i=1
         print("Start processing from " + str(args.seg_start) + " to " + str(loop_end))
         for s in q[args.seg_start:loop_end]:
-            output,c=searchScholar(s,output,c)
+            if args.use_bing:
+                output,c=searchBing(s, output, c)
+            else:
+                output,c=searchScholar(s,output,c)
+
+            return 0
             msg = "\r"+str(i+args.seg_start)+"/"+str(nb_segments)+"completed..."
             sys.stdout.write(msg)
             sys.stdout.flush()
