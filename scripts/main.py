@@ -17,6 +17,8 @@ import codecs
 import json as simplejson
 import traceback
 import sys
+import random
+import time
 import operator
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 
@@ -50,7 +52,7 @@ def searchWeb(text,output,c):
     try:
         text = text.encode('utf-8')
     except:
-        text =  text
+        text = text
     query = urllib.parse.quote_plus(text)
     if len(query)>60:
         return output,c
@@ -91,36 +93,34 @@ def searchScholar(text, output, c):
             search_res_limit -= 1
 
             art_title = it['bib']['title']
-            if art_title in output:
-                output[art_title] = output[art_title] + 1
-                c[art_title] = (it['pub_url'] , text) # (c[art_title]*(output[art_title] - 1) + cosineSim(text,strip_tags(content)))/(output[art_title])
+            art_link = it['pub_url']
+            if art_link in output:
+                output[art_link] = output[art_link] + 1
+                c[art_link] = (output[art_link], c[art_link][1] + [text]) # (c[art_title]*(output[art_title] - 1) + cosineSim(text,strip_tags(content)))/(output[art_title])
             else:
-                output[art_title] = 1
-                c[art_title] = (it['pub_url'] , text) # cosineSim(text,strip_tags(content))
+                output[art_link] = 1
+                c[art_link] = (1, [text]) # cosineSim(text,strip_tags(content))
     except:
         return output,c
     return output,c
 
+
 def searchBing(text, output, c):
+    time.sleep(random.uniform(1.2,2.5))
+
     try:
         text = text.encode('utf-8')
     except:
-        text =  text
+        text = text
 
     query = urllib.parse.quote_plus(text)
-    # if len(query)>60:
-    #    return output,c
 
     base_url = 'https://www.bing.com/search?q='
     url = base_url + query
-    print("Bing URL: " + url)
     request = urllib.request.Request(url,None,{'Referer':'Google Chrome'})
     response = urllib.request.urlopen(request)
-    print("Res " + str(response))
-    # print("Res " + str(response.read()))
-    print("Content :" + str(response.__dict__))
 
-    soup = BeautifulSoup(response.read())
+    soup = BeautifulSoup(response.read(), 'html.parser')
     search_res = soup.find_all(class_="b_algo")
 
     search_res_limit = 4
@@ -141,15 +141,15 @@ def searchBing(text, output, c):
         for content  in contents:
             art_brief = content.text
 
-        score = cosineSim(text, art_brief)
-        if art_title in output:
+        score = cosineSim(text.decode('utf-8'), art_brief)
+        if art_link in output:
             output[art_link] = output[art_link] + 1
 
             revised_score = (c[art_title]*(output[art_link] - 1) + score)/(output[art_link])
-            c[art_link] = (art_title, art_brief, revised_score)
+            c[art_link] = (revised_score, c[art_link][1] + [art_brief])
         else:
             output[art_title] = 1
-            c[art_link] = (art_title, art_brief, score)
+            c[art_link] = (score, [art_brief])
 
     return output,c
 
@@ -197,7 +197,7 @@ def main():
 
     #using 2 dictionaries: c and output
     #output is used to store the url as key and number of occurences of that url in different searches as value
-    #c is used to store url as key and tuple of URL and text leading to this match
+    #c is used to store url as key and tuple (score, text/brief) leading to this match
 
     nb_segments = len(q)
     loop_end = args.seg_start + args.limit
@@ -216,7 +216,6 @@ def main():
             else:
                 output,c=searchScholar(s,output,c)
 
-            return 0
             msg = "\r"+str(i+args.seg_start)+"/"+str(nb_segments)+"completed..."
             sys.stdout.write(msg)
             sys.stdout.flush()
@@ -228,10 +227,12 @@ def main():
         # In all cases, let's try to save the results
         for ele in sorted(iter(c.items()),key=operator.itemgetter(1),reverse=True):
             # f.write(str(ele[1][1]) + str(" - ") + str(ele[0]) + str("(") + str(ele[1][0]) + str(")"))
-            args.report.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
-            args.report.write("\n")
+            args.report.write(str(ele[1][0]) + " - " + str(ele[0]) + '\n')
+            for t in ele[1][1]:
+                args.report.write('\t' + t + '\n')
 
-    #print "\n"
+            # args.report.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
+            args.report.write("\n")
 
     print("\nDone!")
 
