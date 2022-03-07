@@ -96,10 +96,10 @@ def searchScholar(text, output, c):
             art_link = it['pub_url']
             if art_link in output:
                 output[art_link] = output[art_link] + 1
-                c[art_link] = (output[art_link], c[art_link][1] + [text]) # (c[art_title]*(output[art_title] - 1) + cosineSim(text,strip_tags(content)))/(output[art_title])
+                c[art_link] = (output[art_link], c[art_link][1] + [("", text)])
             else:
                 output[art_link] = 1
-                c[art_link] = (1, [text]) # cosineSim(text,strip_tags(content))
+                c[art_link] = (1, [("", text)])
     except:
         return output,c
     return output,c
@@ -116,7 +116,7 @@ def searchBing(text, output, c):
     query = urllib.parse.quote_plus(text)
 
     base_url = 'https://www.bing.com/search?q='
-    url = base_url + query
+    url = base_url + '"' + query + '"'
     request = urllib.request.Request(url,None,{'Referer':'Google Chrome'})
     response = urllib.request.urlopen(request)
 
@@ -146,23 +146,23 @@ def searchBing(text, output, c):
             output[art_link] = output[art_link] + 1
 
             revised_score = (c[art_title]*(output[art_link] - 1) + score)/(output[art_link])
-            c[art_link] = (revised_score, c[art_link][1] + [art_brief])
+            c[art_link] = (revised_score, c[art_link][1] + [(art_brief, text)])
         else:
             output[art_title] = 1
-            c[art_link] = (score, [art_brief])
+            c[art_link] = (score, [(art_brief, text)])
 
     return output,c
 
 
 # Use the main function to scrutinize a file for
 # plagiarism
-n=9
 def main():
     arg_parser = argparse.ArgumentParser(description="Scan a text document for plagiarism.")
     arg_parser.add_argument('--use_proxy', action='store_true', dest = 'use_proxy', default=False, help='Use an automatically found proxy')
     arg_parser.add_argument('-s', '--start', type=int, dest='seg_start', default=0, help='Start the scan from a specific segment (allows to resume a scan)')
-    arg_parser.add_argument('-l', '--limit', type=int, dest='limit', default=0, help='Limits the number of segments scanned (default: no limit)')
-    arg_parser.add_argument('-b', '--bing', action='store_true', dest = 'use_bing', default=False, help='Use Bing as search engine (default uses Google Scholar)')
+    arg_parser.add_argument('-l', '--limit', type=int, dest='limit', default=0, help='Limits the number of segments scanned (by default there is no limit)')
+    arg_parser.add_argument('-b', '--bing', action='store_true', dest = 'use_bing', default=False, help='Use Bing as search engine (default is Google Scholar)')
+    arg_parser.add_argument('-n', type=int, dest='segment_size', default=9, help='Size of the segments to use when splitting the input text (default is 9)')
     arg_parser.add_argument(type=argparse.FileType('r'), dest='text', help='Text file to scan')
     arg_parser.add_argument(type=argparse.FileType('w'), dest='report', help='Text file where the report is written')
 
@@ -192,11 +192,11 @@ def main():
                 break
 
     t=args.text.read()
-    queries = getQueries(t,n)
+    queries = getQueries(t,args.segment_size)
     q = [' '.join(d) for d in queries]
 
     #using 2 dictionaries: c and output
-    #output is used to store the url as key and number of occurences of that url in different searches as value
+    #output is used to store the url as key and number of occurrences of that url in different searches as value
     #c is used to store url as key and tuple (score, text/brief) leading to this match
 
     nb_segments = len(q)
@@ -229,7 +229,8 @@ def main():
             # f.write(str(ele[1][1]) + str(" - ") + str(ele[0]) + str("(") + str(ele[1][0]) + str(")"))
             args.report.write(str(ele[1][0]) + " - " + str(ele[0]) + '\n')
             for t in ele[1][1]:
-                args.report.write('\t' + t + '\n')
+                args.report.write("--> " + str(t[1]) + '\n')
+                args.report.write('\t' + t[0] + '\n')
 
             # args.report.write(str(ele[1][1]) + str("(") + str(ele[1][0]) + str(")"))
             args.report.write("\n")

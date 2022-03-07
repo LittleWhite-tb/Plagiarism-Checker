@@ -1,127 +1,67 @@
 # Plagiarism-Checker
 
 A utility to check if a document's contents are plagiarised.
+This is a fork based on [this project](https://github.com/architshukla/Plagiarism-Checker), but stripped down, ported to Python 3 and updated to make it work again with Google.
 
 ## How it works
 
-*   It searches online using Google Search API's for some queries. Queries are n-grams extracted from the source txt file.
-*   Resulting URL, matched contents are checked for similarity with given text query.
-*   Result of average similarity of all URL's is stored in output text file.
+*   It splits the input text in segments
+*   It searches the segments online on Google Scholar thanks to [scholarly](https://github.com/scholarly-python-package/scholarly) Python module or on Microsoft Bing.
+*   The result page is used to determine similarity with given text query.
+*   Similarities result of all request are stored in output text file.
 
 ## Required Libraries
-The project uses python-docx module to decode docx files. The python-docx module has its own set of dependent libraries. The required libraries are:
 
-*   PIL
-*   lxml
-*   python-dateutil
-*   python-docx
+*   [scholarly](https://github.com/scholarly-python-package/scholarly)
+*   FreeProxy
+*   Beautiful Soup 4
+
 
 ### GETTING LIBRARIES ON LINUX
 
-* Get easy_install
-
-```bash
-sudo apt-get install python-setuptools
-```
-* Install PIP
-
-```bash
-sudo easy_install pip
-```
 * Install dependent libraries
 
 ```bash
-sudo pip install PIL
-
-sudo pip install lxml
-
-sudo pip install python-dateutil
-```
-
-* Install python-docx
-
-```bash
-sudo pip install docx
-```
-
-* Install pdftotext for pdf support (sketchy at the moment)
-
-```bash
-sudo apt-get install poppler-utils
-```
-
-* Get ppt and doc support
-
-```bash
-sudo apt-get install catdoc
+sudo pip3 install scholarly free-proxy beautifulsoup4
 ```
 
 ### GETTING LIBRARIES ON WINDOWS
 
-These steps assume you already have python installed and that python is in your windows environment variables.
-
-Download [setup-tools](http://pypi.python.org/pypi/setuptools) according to your python version. (That is python 2.7 in most cases)
-
-Run the .exe file. The installer will automatically find your python installation location from the registry and install easy_install to the Scripts directory where your python installation is located.
-
-Once the installer has run, add easy_install to the windows environment variables path.
-
-* Open a command window
-* Run the following command:
+These steps assume you already have python (with pip) installed and that python is in your windows environment variables.
 
 ```bash
-easy_install pip
+sudo pip3 install scholarly free-proxy beautifulsoup4
 ```
-* Then install the required libraries for docx support
+
+## Usage
 
 ```bash
-pip install PIL
+usage: main.py [-h] [--use_proxy] [-s SEG_START] [-l LIMIT] [-b] [-n SEGMENT_SIZE] text report
 
-pip install lxml
+Scan a text document for plagiarism.
 
-pip install python-dateutil
+positional arguments:
+  text                  Text file to scan
+  report                Text file where the report is written
 
-pip install docx
+options:
+  -h, --help            show this help message and exit
+  --use_proxy           Use an automatically found proxy
+  -s SEG_START, --start SEG_START
+                        Start the scan from a specific segment (allows to resume a scan)
+  -l LIMIT, --limit LIMIT
+                        Limits the number of segments scanned (by default there is no limit)
+  -b, --bing            Use Bing as search engine (default is Google Scholar)
+  -n SEGMENT_SIZE       Size of the segments to use when splitting the input text (default is 9)
 ```
 
-* EXEs for pdf, ppt and doc support are included in the package. Nothing need be installed.
+## Notes
 
-## Folder Structure
+Before starting a check, you should remove some unwanted text from the input file: lone numbers (from title, images or references), titles...
 
-*   assets/
+You can always stop the pending check (with Ctrl+C). It will write the results found until now. Then you can start from where you have stopped using the `-s` option. Please note that Google is strict upon using its search engine. The scan is highly likely to hangs after an amount of request. Hence the proxy feature and `-s` option.
 
-Holds Twitter Bootstrap CSS and Javascript files and images/glyphicons
+Google Scholar gives always a similarity of 1, since the search are done using perfect match.
 
-*   config/
+Microsoft Bing is not speciliazed in scholar results so you will have to look at the source from which one the result has been found.
 
-Stores configuration data (Path to Python on Windows)
-
-*   scripts/
-
-Contains python scripts to perform plagiarism checks
-
-*   temp/
-
-Contains uploaded files
-
-## Python Scripts
-
-Backend is supported using python. There are 3 scripts in total.
-
-*   scripts/main.py
-
-Main script which gets the results of plagiarism
-
-*   scripts/htmlstrip.py
-
-Used to strip text from HTML tags
-
-*   scripts/cosineSim.py
-
-Helper modules to find cosine similarity between strings
-
-## Usage of Python Script (Standalone)
-
-```bash
-python main.py sampleText.txt sampleOut.txt
-```
