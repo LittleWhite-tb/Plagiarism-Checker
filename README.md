@@ -16,21 +16,9 @@ This is a fork based on [this project](https://github.com/architshukla/Plagiaris
 *   FreeProxy
 *   Beautiful Soup 4
 
-
-### GETTING LIBRARIES ON LINUX
-
-* Install dependent libraries
-
+You can fetch these using the following command:
 ```bash
-sudo pip3 install scholarly free-proxy beautifulsoup4
-```
-
-### GETTING LIBRARIES ON WINDOWS
-
-These steps assume you already have Python 3 (with pip) installed and that python is in your windows environment variables.
-
-```bash
-sudo pip3 install scholarly free-proxy beautifulsoup4
+pip3 install scholarly free-proxy beautifulsoup4
 ```
 
 ## Usage
