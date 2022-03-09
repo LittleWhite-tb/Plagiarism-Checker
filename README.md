@@ -1,7 +1,7 @@
 # Plagiarism-Checker
 
-A utility to check if a document's contents are plagiarised.
-This is a fork based on [this project](https://github.com/architshukla/Plagiarism-Checker), but stripped down, ported to Python 3 and updated to make it work again with Google.
+Plagiarism-Checker checks if segment of your input text can be found on Internet. In short, it checks for plagiarism.
+This is a fork based on [this project](https://github.com/architshukla/Plagiarism-Checker), but stripped down, ported to Python 3 and updated to make it work again with Google search engine (and, as a bonus, with Bing).
 
 ## How it works
 
@@ -27,7 +27,7 @@ sudo pip3 install scholarly free-proxy beautifulsoup4
 
 ### GETTING LIBRARIES ON WINDOWS
 
-These steps assume you already have python (with pip) installed and that python is in your windows environment variables.
+These steps assume you already have Python 3 (with pip) installed and that python is in your windows environment variables.
 
 ```bash
 sudo pip3 install scholarly free-proxy beautifulsoup4
@@ -57,11 +57,11 @@ options:
 
 ## Notes
 
-Before starting a check, you should remove some unwanted text from the input file: lone numbers (from title, images or references), titles...
+Before starting a scan, you should remove some unwanted text from the input file: lone numbers (from title, legends or references), titles...
 
-You can always stop the pending check (with Ctrl+C). It will write the results found until now. Then you can start from where you have stopped using the `-s` option. Please note that Google is strict upon using its search engine. The scan is highly likely to hangs after an amount of request. Hence the proxy feature and `-s` option.
+You can always stop the pending check (with Ctrl+C). It will write the results found until now. Then you can start from where you have stopped using the `-s` option. The scan is highly likely to hangs when using Google Scholar after an amount of request. Hence the proxy feature and the `-s` option.
 
-Google Scholar gives always a similarity of 1, since the search are done using perfect match.
+Google Scholar gives always a similarity of 1, since the search is done using perfect match.
 
-Microsoft Bing is not speciliazed in scholar results so you will have to look at the source from which one the result has been found.
+Microsoft Bing is not specialized in scholar results so you will have to look at the source from which one the result has been found.
 
